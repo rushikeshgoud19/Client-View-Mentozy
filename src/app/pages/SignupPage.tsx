@@ -35,8 +35,8 @@ export function SignupPage() {
                     </Link>
 
                     {/* Teacher/Mentor Card */}
-                    <button
-                        onClick={() => alert("Mentor flow coming soon!")}
+                    <Link
+                        to="/teacher-type"
                         className="group relative flex flex-col items-center p-10 bg-white border-2 border-gray-100 rounded-3xl hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 text-center"
                     >
                         <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -47,7 +47,7 @@ export function SignupPage() {
                         <div className="mt-auto opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 font-semibold flex items-center gap-2">
                             Continue <ChevronRight className="w-4 h-4" />
                         </div>
-                    </button>
+                    </Link>
                 </div>
 
                 <div className="text-center">

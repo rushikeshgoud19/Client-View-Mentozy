@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { ArrowRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getSupabase } from '../../lib/supabase';
+import { toast } from 'sonner';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -12,16 +14,18 @@ export function StudentOnboardingPage() {
         age: '',
         phone: '',
         email: '',
+        password: '',
         grade: '',
         school: '',
         interests: [] as string[],
         parentEmail: '',
     });
+    const [loading, setLoading] = useState(false);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Helper to update form data
-    const updateData = (field: string, value: any) => {
+    const updateData = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }));
@@ -48,6 +52,7 @@ export function StudentOnboardingPage() {
             if (!formData.fullName) newErrors.fullName = 'Full Name is required';
             if (!formData.age) newErrors.age = 'Age is required';
             if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Valid Email is required';
+            if (!formData.password || formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
             if (!formData.phone) newErrors.phone = 'Phone is required';
         }
         if (step === 2) {
@@ -72,8 +77,63 @@ export function StudentOnboardingPage() {
         else if (step === 3) setStep(isMinor ? 4 : 5);
         else if (step === 4) setStep(5);
         else if (step === 5) {
-            // Submit Logic would go here
+            handleSubmit();
+        }
+    };
+
+    const handleSubmit = async () => {
+        setLoading(true);
+        try {
+            const supabase = getSupabase();
+            if (!supabase) throw new Error("Supabase not initialized");
+
+            let { data, error } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                // Remove options to prevent trigger errors
+            });
+
+            // Handle "User already registered" by checking error message
+            if (error && error.message.includes("already registered")) {
+                console.log("User exists, attempting sign in...");
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                    email: formData.email,
+                    password: formData.password
+                });
+
+                if (signInError) throw new Error("Account exists but password was incorrect.");
+                data = signInData; // Use the sign-in data
+                error = null; // Clear error
+            }
+
+            if (error) throw error;
+            if (!data.user) throw new Error("No user created");
+
+            // Explicitly create profile to ensure data persistence
+            const { error: profileError } = await supabase.from('profiles').upsert({
+                id: data.user.id,
+                full_name: formData.fullName,
+                grade: formData.grade,
+                school: formData.school,
+                phone: formData.phone,
+                interests: formData.interests,
+                role: 'student'
+            });
+
+            if (profileError) {
+                console.error("Profile creation failed:", profileError);
+                toast.error("Account created but profile setup had issues. Please contact support.");
+            }
+
+            // For now, assuming auto-confirm or just redirecting. 
+            // In production, you might want to show a "Check your email" screen.
             navigate('/student-dashboard');
+        } catch (error) {
+            console.error('Signup failed:', error);
+            const message = error instanceof Error ? error.message : 'Failed to create account';
+            toast.error(message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -117,8 +177,8 @@ export function StudentOnboardingPage() {
                         <div className="relative z-10">
                             <h2 className="text-3xl font-bold mb-4 leading-tight">
                                 {step === 1 && "Tell us about yourself"}
-                                {step === 2 && "Your academic journey"}
-                                {step === 3 && "What excites you?"}
+                                {step === 2 && "Your academic details"}
+                                {step === 3 && "What are you interested in learning?"}
                                 {step === 4 && "Parent/Guardian Details"}
                                 {step === 5 && "Review & Confirm"}
                             </h2>
@@ -193,6 +253,18 @@ export function StudentOnboardingPage() {
                                             placeholder="john@example.com"
                                         />
                                         {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold text-gray-900">Create Password</label>
+                                        <input
+                                            value={formData.password}
+                                            onChange={(e) => updateData('password', e.target.value)}
+                                            type="password"
+                                            className={`w-full px-4 py-3 rounded-xl bg-gray-50 border ${errors.password ? 'border-red-300' : 'border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'} outline-none transition-all`}
+                                            placeholder="Min. 6 characters"
+                                        />
+                                        {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password}</p>}
                                     </div>
                                 </div>
                             )}
@@ -310,10 +382,15 @@ export function StudentOnboardingPage() {
                             </button>
                             <button
                                 onClick={handleNext}
-                                className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                                disabled={loading}
+                                className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {step === 5 ? 'Create Account' : 'Next'}
-                                {step === 5 ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                                    <>
+                                        {step === 5 ? 'Create Account' : 'Next'}
+                                        {step === 5 ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
