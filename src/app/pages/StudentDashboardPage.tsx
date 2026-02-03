@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     BookOpen, ChevronRight,
     Search,
-    Zap, Activity, Award
+    Zap, Activity, Award, Cpu, Heart
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardLayout } from '../components/dashboard/DashboardLayout';
@@ -161,31 +161,36 @@ export function StudentDashboardPage() {
                             </Link>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-5">
+                        <div className="grid md:grid-cols-2 gap-5 mb-10">
                             {loading ? (
                                 [1, 2].map(i => <div key={i} className="h-48 bg-gray-100 rounded-3xl animate-pulse" />)
-                            ) : enrollments.filter(e => e.status === 'active').length > 0 ? (
-                                enrollments.filter(e => e.status === 'active').slice(0, 2).map(enrollment => (
-                                    <div key={enrollment.id} className="group relative overflow-hidden rounded-3xl bg-gray-900 text-white shadow-lg card-zoom">
-                                        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" style={{ backgroundImage: `url('${enrollment.tracks?.image_url || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000&auto=format&fit=crop"}')` }}></div>
-                                        <div className="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-colors"></div>
+                            ) : enrollments.length > 0 ? (
+                                enrollments.slice(0, 2).map(enrollment => (
+                                    <div key={enrollment.id} className="group relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
+                                        <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-500"></div>
 
-                                        <div className="relative p-6 flex flex-col h-full min-h-[220px]">
+                                        <div className="relative p-7 flex flex-col h-full min-h-[220px]">
                                             <div className="flex-1">
-                                                <h3 className="text-xl font-bold mb-2 leading-tight">{enrollment.tracks?.title}</h3>
-                                                <p className="text-sm text-gray-300 line-clamp-2">{enrollment.tracks?.description || 'Continue your progress.'}</p>
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                                                        <BookOpen className="w-4 h-4 text-indigo-600" />
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active Course</span>
+                                                </div>
+                                                <h3 className="text-xl font-bold mb-2 leading-tight text-gray-900">{enrollment.tracks?.title}</h3>
+                                                <p className="text-sm text-gray-500 line-clamp-2">{enrollment.tracks?.description || 'Continue your progress.'}</p>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <div className="flex items-center justify-between text-xs text-gray-300">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between text-xs font-bold text-gray-600">
                                                     <span>{enrollment.tracks?.level}</span>
-                                                    <span>{enrollment.progress}%</span>
+                                                    <span className="text-indigo-600">{enrollment.progress}%</span>
                                                 </div>
-                                                <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${enrollment.progress}%` }}></div>
+                                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${enrollment.progress}%` }}></div>
                                                 </div>
-                                                <Link to={`/tracks`} className="block w-full text-center py-2.5 bg-white text-gray-900 rounded-xl text-sm font-bold mt-2 hover:bg-amber-500 hover:text-white transition-colors">
-                                                    Continue
+                                                <Link to={`/tracks`} className="block w-full text-center py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+                                                    Continue Learning
                                                 </Link>
                                             </div>
                                         </div>
@@ -198,6 +203,38 @@ export function StudentDashboardPage() {
                                     <Link to="/tracks" className="inline-flex items-center justify-center px-6 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-colors">Start Learning</Link>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Recommended For You Section */}
+                        <div className="mt-12">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-gray-900">Recommended for you</h2>
+                                <Link to="/tracks" className="text-amber-600 font-bold text-sm hover:underline flex items-center gap-1">
+                                    View Library <ChevronRight className="w-4 h-4" />
+                                </Link>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-5">
+                                <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-8 relative overflow-hidden group shadow-lg">
+                                    <div className="relative z-10">
+                                        <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/20 inline-block mb-4">Popular</div>
+                                        <h3 className="text-2xl font-bold text-white mb-2">Mastering AI & Data Science</h3>
+                                        <p className="text-indigo-100 text-sm mb-6 max-w-[200px]">Unlock the power of intelligence with our most taken track.</p>
+                                        <Link to="/tracks" className="inline-flex items-center justify-center px-6 py-2.5 bg-white text-indigo-700 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors">Explorer Now</Link>
+                                    </div>
+                                    <Cpu className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 group-hover:scale-110 transition-transform duration-500" />
+                                </div>
+
+                                <div className="bg-gradient-to-br from-rose-500 to-orange-600 rounded-3xl p-8 relative overflow-hidden group shadow-lg">
+                                    <div className="relative z-10">
+                                        <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/20 inline-block mb-4">Trending</div>
+                                        <h3 className="text-2xl font-bold text-white mb-2">UX & Branding Mastery</h3>
+                                        <p className="text-rose-100 text-sm mb-6 max-w-[200px]">Learn to design products that customers actually love.</p>
+                                        <button className="inline-flex items-center justify-center px-6 py-2.5 bg-white text-rose-600 rounded-xl font-bold text-sm hover:bg-rose-50 transition-colors">Explorer Now</button>
+                                    </div>
+                                    <Heart className="absolute -bottom-6 -right-6 w-32 h-32 text-white/10 group-hover:scale-110 transition-transform duration-500" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

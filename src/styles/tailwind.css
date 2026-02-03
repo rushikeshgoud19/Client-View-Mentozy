@@ -19,14 +19,21 @@
   }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
-}
+@layer utilities {
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
+  .glass-morphism {
+    @apply bg-white/40 backdrop-blur-md border border-white/20;
+  }
+  .glass-morphism-heavy {
+    @apply bg-white/70 backdrop-blur-xl border border-white/30;
+  }
 }

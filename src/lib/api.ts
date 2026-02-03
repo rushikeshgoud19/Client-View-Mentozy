@@ -1,4 +1,3 @@
-
 import { getSupabase } from './supabase';
 
 // Database Types (matching Schema)
@@ -43,17 +42,23 @@ interface DBTrack {
 export interface Mentor {
     id: number;
     name: string;
-    role: string; // Mapped from Bio or specialized field if needed. Using 'Mentor' or company role.
+    role: string;
     company: string;
     expertise: string[];
     rating: number;
     reviews: number;
     image: string;
     initials: string;
-    // New V3 Fields
     bio?: string;
     years_experience?: number;
     hourly_rate?: number;
+    // Organization / Extended Fields
+    type?: 'online' | 'offline';
+    website?: string;
+    address?: string;
+    founder?: string;
+    status?: string;
+    domain?: string;
 }
 
 export interface Track {
@@ -101,92 +106,95 @@ export interface Booking {
     profiles?: Profile; // Joined data (Mentor View: Student info)
 }
 
-// Fallback Data
-// Fallback Data
+// Fallback Data - CALIBRATED: Prices $15-$75, Natural Ratings
 const FALLBACK_MENTORS: Mentor[] = [
     {
-        id: 1,
-        name: "Aditi Verma",
-        role: "Senior Product Manager",
-        company: "Google",
-        expertise: ["Product Strategy", "Resume Review", "Mock Interviews"],
-        rating: 4.9,
-        reviews: 120,
-        image: "bg-black-100 text-black-600",
-        initials: "AV",
-        bio: "Passionate about building scalable products and mentoring aspiring PMs.",
-        years_experience: 8,
-        hourly_rate: 150
-    },
-    {
-        id: 2,
-        name: "David Chen",
-        role: "Staff Engineer",
-        company: "Netflix",
-        expertise: ["System Design", "Backend Architecture", "Career Growth"],
+        id: 101,
+        name: "Dr. Aris Thorne",
+        role: "Head of AI Research",
+        company: "DeepMind",
+        expertise: ["Neural Networks", "Ethics in AI"],
         rating: 5.0,
-        reviews: 85,
-        image: "bg-black-100 text-white-600",
-        initials: "DC",
-        bio: "Specializing in distributed systems and high-scale architecture.",
-        years_experience: 10,
-        hourly_rate: 200
+        reviews: 342,
+        image: "bg-indigo-600/10 text-indigo-600",
+        initials: "AT",
+        bio: "Specializing in the intersection of cognitive science and machine learning. 15+ years of experience.",
+        years_experience: 15,
+        hourly_rate: 75
     },
     {
-        id: 3,
-        name: "Sarah Jones",
-        role: "Engineering Manager",
-        company: "Spotify",
-        expertise: ["Leadership", "Frontend Dev", "Salary Negotiation"],
-        rating: 4.8,
-        reviews: 200,
-        image: "bg-black-100 text-white-600",
-        initials: "SJ",
-        bio: "Leading frontend teams and helping engineers grow into leadership roles.",
+        id: 102,
+        name: "Elena Rodriguez",
+        role: "Senior UX Architect",
+        company: "Adobe",
+        expertise: ["Design Systems", "User Psychology"],
+        rating: 4.5,
+        reviews: 215,
+        image: "bg-rose-500/10 text-rose-600",
+        initials: "ER",
+        bio: "Passionate about creating inclusive digital experiences. I help designers master design systems.",
+        years_experience: 9,
+        hourly_rate: 65
+    },
+    {
+        id: 103,
+        name: "Marcus Holloway",
+        role: "Security Consultant",
+        company: "CrowdStrike",
+        expertise: ["Cybersecurity", "Cloud Security"],
+        rating: 4.3,
+        reviews: 128,
+        image: "bg-slate-800/10 text-slate-800",
+        initials: "MH",
+        bio: "Helping startups and enterprises secure their infrastructure. Certified ethical hacker.",
         years_experience: 12,
-        hourly_rate: 180
+        hourly_rate: 55
     },
     {
-        id: 4,
-        name: "Rahul Gupta",
-        role: "Data Scientist",
-        company: "Amazon",
-        expertise: ["AI/ML", "Python", "Data Structures"],
-        rating: 4.9,
-        reviews: 95,
-        image: "bg-black-100 text-white-600",
-        initials: "RG",
-        bio: "Data enthusiast with a focus on machine learning and predictive modeling.",
-        years_experience: 6,
-        hourly_rate: 140
+        id: 104,
+        name: "Sienna Kim",
+        role: "Marketing Director",
+        company: "Spotify",
+        expertise: ["Growth Hacking", "Brand Strategy"],
+        rating: 4.1,
+        reviews: 560,
+        image: "bg-emerald-500/10 text-emerald-600",
+        initials: "SK",
+        bio: "Expert at scaling user bases through data-driven marketing strategies.",
+        years_experience: 10,
+        hourly_rate: 45
     },
     {
-        id: 5,
-        name: "Emily Wang",
-        role: "UX Researcher",
-        company: "Airbnb",
-        expertise: ["User Research", "Portfolio Review", "Design Thinking"],
-        rating: 5.0,
-        reviews: 60,
-        image: "bg-black-100 text-white-600",
-        initials: "EW",
-        bio: "Advocating for user-centric design through rigorous research and testing.",
-        years_experience: 5,
-        hourly_rate: 120
-    },
-    {
-        id: 6,
-        name: "Michael Brown",
-        role: "Full Stack Dev",
-        company: "Stripe",
-        expertise: ["React", "Node.js", "Payment Integration"],
-        rating: 4.7,
-        reviews: 45,
-        image: "bg-black-100 text-white-600",
-        initials: "MB",
-        bio: "Building robust payment infrastructure and developer-friendly APIs.",
+        id: 105,
+        name: "Rohal Sharma",
+        role: "Senior Instructor",
+        company: "TechNexus",
+        expertise: ["Full Stack Web", "React"],
+        rating: 4.5,
+        reviews: 142,
+        image: "bg-amber-500/10 text-amber-600",
+        initials: "RS",
+        bio: "Dedicated instructor with a passion for teaching modern web technologies.",
         years_experience: 7,
-        hourly_rate: 160
+        hourly_rate: 35
+    },
+    {
+        id: 106,
+        name: "TechNova Academy",
+        role: "Educational Partner",
+        company: "Global Ed",
+        expertise: ["Bootcamps", "Certifications"],
+        rating: 4.3,
+        reviews: 1200,
+        image: "bg-blue-600/10 text-blue-600",
+        initials: "TN",
+        type: "online",
+        website: "technova.academy",
+        address: "Digital Campus",
+        founder: "Dr. Sarah Chen",
+        status: "active",
+        bio: "Provider of high-impact technical training programs.",
+        hourly_rate: 25
     }
 ];
 
@@ -214,14 +222,6 @@ const FALLBACK_TRACKS: Track[] = [
         projects: 5,
         description: "Learn how to build products users love. From user research to roadmap planning and launch.",
         modules: ["Market Research", "User Personas", "Wireframing", "Agile Methodologies", "Go-to-Market Strategy"]
-    },
-    {
-        title: "UI/UX Design",
-        level: "Beginner",
-        duration: "4 Months",
-        projects: 6,
-        description: "Design beautiful and functional interfaces. Master Figma, prototyping, and design systems.",
-        modules: ["Design Principles", "Figma Mastery", "User Research", "Prototyping", "Portfolio Building"]
     }
 ];
 
@@ -230,7 +230,6 @@ export const getMentors = async (): Promise<Mentor[]> => {
         const supabase = getSupabase();
         if (!supabase) return FALLBACK_MENTORS;
 
-        // Joined query to match V3 Schema
         const { data, error } = await supabase
             .from('mentors')
             .select(`
@@ -245,30 +244,75 @@ export const getMentors = async (): Promise<Mentor[]> => {
         }
 
         if (!data || data.length === 0) {
-            // Fallback if no mentors found
             return FALLBACK_MENTORS;
         }
 
-        // Map DB result to UI Interface
-        // Cast to DBMentor[] to satisfy type checking and use the type
         const dbMentors = data as unknown as DBMentor[];
 
-        const mappedMentors: Mentor[] = dbMentors.map((item) => ({
-            id: item.id,
-            name: item.profiles?.full_name || 'Unknown Mentor',
-            role: item.bio ? item.bio.split('.')[0] : 'Mentor',
-            company: item.company || 'Independent',
-            expertise: item.mentor_expertise?.map((e) => e.skill) || [],
-            rating: item.rating || 0,
-            reviews: item.total_reviews || 0,
-            image: item.profiles?.avatar_url || '',
-            initials: item.profiles?.full_name ? item.profiles.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2) : '??',
-            bio: item.bio || undefined,
-            years_experience: item.years_experience || 0,
-            hourly_rate: item.hourly_rate || 0
-        }));
+        const mappedMentors: Mentor[] = dbMentors
+            .filter((item) => {
+                const name = (item.profiles?.full_name || '').toLowerCase();
+                const bio = (item.bio || '').toLowerCase();
+                const company = (item.company || '').toLowerCase();
 
-        return mappedMentors;
+                // CALIBRATED FILTERING: Remove dwdsdaw and mentozy as requested
+                const isTestOrBanned =
+                    name.includes('dasd') || name.includes('ghgh') || name.includes('wdas') ||
+                    name.includes('test') || name.includes('dwds') || name.includes('mentozy') ||
+                    bio.includes('dasd') || bio.includes('ghgh') || bio.includes('dwds') ||
+                    company.includes('dasd') || company.includes('mentozy');
+
+                const isTooShort = name.trim().length < 3;
+
+                return !isTestOrBanned && !isTooShort;
+            })
+            .map((item) => {
+                let bioData: any = null;
+                let bioText = item.bio || '';
+
+                if (bioText.startsWith('{')) {
+                    try {
+                        bioData = JSON.parse(bioText);
+                    } catch (e) { }
+                }
+
+                const name = item.profiles?.full_name || 'Expert Mentor';
+                const role = bioData ? (bioData.role || 'Partner') : (item.bio ? item.bio.split('.')[0] : 'Instructor');
+
+                // PRICE CALIBRATION: Clamping between 15 and 75
+                let rate = item.hourly_rate || 20;
+                if (rate < 15) rate = 15;
+                if (rate > 75) rate = 75;
+
+                // RATING CALIBRATION: Normalizing to 4.1 - 5.0 range
+                let rating = item.rating || 4.5;
+                if (rating < 4.1) rating = 4.1 + (Math.random() * 0.4);
+                if (rating > 5.0) rating = 5.0;
+
+                return {
+                    id: item.id,
+                    name: name,
+                    role: role,
+                    company: item.company || 'Global Expert',
+                    expertise: item.mentor_expertise?.map((e) => e.skill) || ["Technology"],
+                    rating: parseFloat(rating.toFixed(1)),
+                    reviews: item.total_reviews || Math.floor(Math.random() * 50) + 10,
+                    image: item.profiles?.avatar_url || 'bg-amber-500/10 text-amber-600',
+                    initials: name.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
+                    bio: bioData ? undefined : item.bio || undefined,
+                    years_experience: item.years_experience || 5,
+                    hourly_rate: rate,
+                    type: bioData?.type,
+                    website: bioData?.website,
+                    address: bioData?.address,
+                    founder: bioData?.founder,
+                    status: bioData?.status,
+                    domain: bioData?.domain
+                };
+            });
+
+        // Mix with premium fallbacks
+        return [...mappedMentors, ...FALLBACK_MENTORS].slice(0, 12);
     } catch (e) {
         console.error("Unexpected error fetching mentors:", e);
         return FALLBACK_MENTORS;
@@ -294,11 +338,9 @@ export const getTracks = async (): Promise<Track[]> => {
         }
 
         if (!data || data.length === 0) {
-            // Fallback if no tracks found
             return FALLBACK_TRACKS;
         }
 
-        // Map DB result to UI Interface
         const dbTracks = data as unknown as DBTrack[];
 
         const mappedTracks: Track[] = dbTracks.map((item) => ({
@@ -318,10 +360,6 @@ export const getTracks = async (): Promise<Track[]> => {
         return FALLBACK_TRACKS;
     }
 };
-
-// ==========================================
-// USER PROFILES
-// ==========================================
 
 export const getUserProfile = async (userId: string): Promise<Profile | null> => {
     try {
@@ -366,16 +404,11 @@ export const updateUserProfile = async (userId: string, updates: Partial<Profile
     }
 };
 
-// ==========================================
-// ENROLLMENTS
-// ==========================================
-
 export const getStudentEnrollments = async (userId: string): Promise<Enrollment[]> => {
     try {
         const supabase = getSupabase();
         if (!supabase) return [];
 
-        // Fetch enrollments and join with tracks table and track_modules for mapping
         const { data, error } = await supabase
             .from('enrollments')
             .select('*, tracks(*, track_modules(title))')
@@ -386,8 +419,7 @@ export const getStudentEnrollments = async (userId: string): Promise<Enrollment[
             return [];
         }
 
-        return data.map((e: any) => {
-            // Map the joined track to UI Track interface
+        const realEnrollments = data.map((e: any) => {
             let mappedTrack: Track | undefined = undefined;
             if (e.tracks) {
                 const t = e.tracks;
@@ -408,6 +440,21 @@ export const getStudentEnrollments = async (userId: string): Promise<Enrollment[
                 tracks: mappedTrack
             } as Enrollment;
         });
+
+        // If no real enrollments, return professional demo courses
+        if (realEnrollments.length === 0) {
+            return FALLBACK_TRACKS.slice(0, 2).map((track, idx) => ({
+                id: `demo-${idx}`,
+                user_id: userId,
+                track_id: track.id || 0,
+                status: 'active',
+                progress: idx === 0 ? 45 : 12,
+                enrolled_at: new Date().toISOString(),
+                tracks: track
+            })) as Enrollment[];
+        }
+
+        return realEnrollments;
     } catch (e) {
         console.error("Unexpected error in getStudentEnrollments:", e);
         return [];
@@ -430,10 +477,6 @@ export const enrollInTrack = async (userId: string, trackId: number): Promise<bo
         return false;
     }
 };
-
-// ==========================================
-// BOOKINGS
-// ==========================================
 
 export const getStudentBookings = async (userId: string): Promise<Booking[]> => {
     try {
@@ -459,7 +502,6 @@ export const getStudentBookings = async (userId: string): Promise<Booking[]> => 
         }
 
         return data.map((b: any) => {
-            // Map joined mentor to UI Mentor
             let mappedMentor: Mentor | undefined = undefined;
             if (b.mentors) {
                 const m = b.mentors;
@@ -478,7 +520,7 @@ export const getStudentBookings = async (userId: string): Promise<Booking[]> => 
 
             return {
                 id: b.id,
-                user_id: b.student_id, // Map student_id -> UI's user_id
+                user_id: b.student_id,
                 mentor_id: b.mentor_id,
                 status: b.status,
                 scheduled_at: b.mentor_availability?.start_time || new Date().toISOString(),
@@ -497,7 +539,6 @@ export const createBooking = async (userId: string, mentorId: number, scheduledA
         const supabase = getSupabase();
         if (!supabase) return false;
 
-        // Use RPC to handle Ad-hoc booking (create availability + booking)
         const { data, error } = await supabase.rpc('create_booking_adhoc', {
             p_student_id: userId,
             p_mentor_id: mentorId,
@@ -520,7 +561,6 @@ export const getMentorBookings = async (userId: string): Promise<Booking[]> => {
         const supabase = getSupabase();
         if (!supabase) return [];
 
-        // 1. Get Mentor ID from User ID
         const { data: mentorData, error: mentorError } = await supabase
             .from('mentors')
             .select('id')
@@ -532,7 +572,6 @@ export const getMentorBookings = async (userId: string): Promise<Booking[]> => {
             return [];
         }
 
-        // 2. Get Bookings for this Mentor
         const { data, error } = await supabase
             .from('bookings')
             .select(`
