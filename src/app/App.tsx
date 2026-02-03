@@ -30,6 +30,11 @@ const TeacherSuccessPage = lazy(() => import('./pages/TeacherSuccessPage').then(
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(module => ({ default: module.AdminDashboardPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
 const PlansPage = lazy(() => import('./pages/PlansPage').then(module => ({ default: module.PlansPage })));
+const CoursesPage = lazy(() => import('./pages/CoursesPage').then(module => ({ default: module.CoursesPage })));
+const CalendarPage = lazy(() => import('./pages/CalendarPage').then(module => ({ default: module.CalendarPage })));
+const MessagesPage = lazy(() => import('./pages/MessagesPage').then(module => ({ default: module.MessagesPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const CertificationsPage = lazy(() => import('./pages/CertificationsPage'));
 
 export type Page = 'home' | 'careers' | 'mentors' | 'tracks' | 'about' | 'contact' | 'login' | 'signup' | 'student-auth' | 'student-onboarding' | 'student-dashboard';
 
@@ -159,6 +164,31 @@ function App() {
         <Route path="/profile" element={
           <Suspense fallback={<PageLoader />}>
             <ProfilePage />
+          </Suspense>
+        } />
+        <Route path="/courses" element={
+          <Suspense fallback={<PageLoader />}>
+            <CoursesPage />
+          </Suspense>
+        } />
+        <Route path="/calendar" element={
+          <Suspense fallback={<PageLoader />}>
+            <CalendarPage />
+          </Suspense>
+        } />
+        <Route path="/messages" element={
+          <Suspense fallback={<PageLoader />}>
+            <MessagesPage />
+          </Suspense>
+        } />
+        <Route path="/analytics" element={
+          <Suspense fallback={<PageLoader />}>
+            <AnalyticsPage />
+          </Suspense>
+        } />
+        <Route path="/certifications" element={
+          <Suspense fallback={<PageLoader />}>
+            <CertificationsPage />
           </Suspense>
         } />
       </Routes>
