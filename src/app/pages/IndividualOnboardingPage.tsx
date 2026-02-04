@@ -17,6 +17,7 @@ export function IndividualOnboardingPage() {
         fullName: '',
         designation: '', // Student, Graduate, Working Professional, Certified Mentor
         email: '',
+        password: '',
         phone: '',
         subjects: [] as string[],
         strengths: '',
@@ -51,6 +52,7 @@ export function IndividualOnboardingPage() {
         }
         if (step === 2) {
             if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = "Valid Email is required";
+            if (!formData.password || formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
             if (!formData.phone) newErrors.phone = "Phone number is required";
         }
         if (step === 3) {
@@ -77,7 +79,7 @@ export function IndividualOnboardingPage() {
             // Note: For this demo flow we assume new user. Ideally handle "User already exists" logic
             let { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
-                password: 'Password123!',
+                password: formData.password,
                 // Remove options to prevent trigger errors
             });
 
@@ -222,6 +224,17 @@ export function IndividualOnboardingPage() {
                                             placeholder="+1 234 567 8900"
                                         />
                                         {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700">Create Password</label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => updateData('password', e.target.value)}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none"
+                                            placeholder="Min. 6 characters"
+                                        />
+                                        {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
                                     </div>
                                 </div>
                             </div>

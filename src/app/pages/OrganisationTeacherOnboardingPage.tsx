@@ -20,6 +20,7 @@ export function OrganisationTeacherOnboardingPage() {
         orgName: '',
         orgType: '' as OrgType | '',
         officialEmail: '',
+        password: '',
         role: '', // Founder, Admin, Instructor, Manager
         teachingDomain: '', // Single/Multi
         website: '',
@@ -53,6 +54,9 @@ export function OrganisationTeacherOnboardingPage() {
                 if (!formData.officialEmail || !emailRegex.test(formData.officialEmail)) {
                     newErrors.officialEmail = "Enter a valid official email (.com, .in, .edu)";
                 }
+                if (!formData.password || formData.password.length < 6) {
+                    newErrors.password = "Password must be at least 6 characters";
+                }
             }
             if (step === 4) {
                 if (!formData.role) newErrors.role = "Please select your role";
@@ -64,6 +68,7 @@ export function OrganisationTeacherOnboardingPage() {
             if (step === 4) { // Step 3 is just a notice
                 if (!formData.founderName) newErrors.founderName = "Founder Name is required";
                 if (!formData.officialEmail) newErrors.officialEmail = "Email is required";
+                if (!formData.password || formData.password.length < 6) newErrors.password = "Password is required (min 6 chars)";
                 if (!formData.address) newErrors.address = "Address is required";
             }
         }
@@ -100,7 +105,7 @@ export function OrganisationTeacherOnboardingPage() {
             // Signup Logic
             let { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.officialEmail,
-                password: 'Password123!',
+                password: formData.password,
                 // Remove options to prevent trigger errors
             });
 
@@ -241,6 +246,17 @@ export function OrganisationTeacherOnboardingPage() {
                                     />
                                     {errors.officialEmail && <p className="text-xs text-red-500">{errors.officialEmail}</p>}
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Create Password</label>
+                                    <input
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={(e) => updateData('password', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                                        placeholder="Min. 6 characters"
+                                    />
+                                    {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+                                </div>
                             </div>
                         )}
 
@@ -338,6 +354,17 @@ export function OrganisationTeacherOnboardingPage() {
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
                                         />
                                         {errors.officialEmail && <p className="text-xs text-red-500">{errors.officialEmail}</p>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700">Create Password</label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => updateData('password', e.target.value)}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 outline-none"
+                                            placeholder="Min. 6 characters"
+                                        />
+                                        {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Address</label>
