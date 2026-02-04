@@ -5,7 +5,7 @@ import {
     MoreVertical, ChevronLeft, ChevronRight,
     User, StickyNote
 } from 'lucide-react';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 
 interface Event {
     id: string;
@@ -182,8 +182,8 @@ export function CalendarPage() {
                                         key={day}
                                         onClick={(e) => handleDateClick(day, e)}
                                         className={`aspect-square relative rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-amber-50 group border ${isToday ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-200' :
-                                                isSelected ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-inner' :
-                                                    'border-transparent text-gray-700'
+                                            isSelected ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-inner' :
+                                                'border-transparent text-gray-700'
                                             }`}
                                     >
                                         <span className="text-sm font-bold">{day}</span>
@@ -204,8 +204,8 @@ export function CalendarPage() {
                                 <div key={event.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className={`p-3 rounded-2xl ${event.type === 'session' ? 'bg-indigo-50 text-indigo-600' :
-                                                event.type === 'workshop' ? 'bg-emerald-50 text-emerald-600' :
-                                                    'bg-rose-50 text-rose-600'
+                                            event.type === 'workshop' ? 'bg-emerald-50 text-emerald-600' :
+                                                'bg-rose-50 text-rose-600'
                                             }`}>
                                             <Clock className="w-5 h-5" />
                                         </div>

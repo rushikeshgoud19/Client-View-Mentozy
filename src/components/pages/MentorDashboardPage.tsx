@@ -10,7 +10,7 @@ import {
     DollarSign, ChevronRight, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 
 export function MentorDashboardPage() {
     const { user } = useAuth();

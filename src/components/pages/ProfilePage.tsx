@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getUserProfile, updateUserProfile, Profile } from '@/lib/api';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 import {
     Loader2, User, Save, Camera, Mail,
     MapPin, GraduationCap, Award, Clock,

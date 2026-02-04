@@ -7,7 +7,7 @@ import {
     TrendingUp, Clock, BookOpen, Target,
     Award, Brain, Zap, ChevronUp
 } from 'lucide-react';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 
 const studyData = [
     { name: 'Mon', hours: 4.5 },

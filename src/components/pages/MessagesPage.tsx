@@ -7,7 +7,7 @@ import {
     Info, Users, GraduationCap,
     Circle
 } from 'lucide-react';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 
 interface Message {
     id: string;

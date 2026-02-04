@@ -1,19 +1,19 @@
 "use client";
 import { lazy, Suspense } from 'react';
-import { HeroSection } from '../components/HeroSection';
+import { HeroSection } from '../HeroSection';
 
 
 // Lazy load heavy page components
-const FeaturesSection = lazy(() => import('../components/FeaturesSection').then(module => ({ default: module.FeaturesSection })));
-const HowItWorks = lazy(() => import('../components/HowItWorks').then(module => ({ default: module.HowItWorks })));
-const MentorshipFormats = lazy(() => import('../components/MentorshipFormats').then(module => ({ default: module.MentorshipFormats })));
-const LearningTracks = lazy(() => import('../components/LearningTracks').then(module => ({ default: module.LearningTracks })));
-const TeamSection = lazy(() => import('../components/TeamSection').then(module => ({ default: module.TeamSection })));
-const CTASection = lazy(() => import('../components/CTASection').then(module => ({ default: module.CTASection })));
-const Opportunities = lazy(() => import('../components/Opportunities').then(module => ({ default: module.Opportunities })));
-const TechnologySection = lazy(() => import('../components/TechnologySection').then(module => ({ default: module.TechnologySection })));
-const WhatWeDoDifferently = lazy(() => import('../components/WhatWeDoDifferently').then(module => ({ default: module.WhatWeDoDifferently })));
-const WhoItsFor = lazy(() => import('../components/WhoItsFor').then(module => ({ default: module.WhoItsFor })));
+const FeaturesSection = lazy(() => import('../FeaturesSection').then(module => ({ default: module.FeaturesSection })));
+const HowItWorks = lazy(() => import('../HowItWorks').then(module => ({ default: module.HowItWorks })));
+const MentorshipFormats = lazy(() => import('../MentorshipFormats').then(module => ({ default: module.MentorshipFormats })));
+const LearningTracks = lazy(() => import('../LearningTracks').then(module => ({ default: module.LearningTracks })));
+const TeamSection = lazy(() => import('../TeamSection').then(module => ({ default: module.TeamSection })));
+const CTASection = lazy(() => import('../CTASection').then(module => ({ default: module.CTASection })));
+const Opportunities = lazy(() => import('../Opportunities').then(module => ({ default: module.Opportunities })));
+const TechnologySection = lazy(() => import('../TechnologySection').then(module => ({ default: module.TechnologySection })));
+const WhatWeDoDifferently = lazy(() => import('../WhatWeDoDifferently').then(module => ({ default: module.WhatWeDoDifferently })));
+const WhoItsFor = lazy(() => import('../WhoItsFor').then(module => ({ default: module.WhoItsFor })));
 
 // HomePage component
 export function HomePage() {

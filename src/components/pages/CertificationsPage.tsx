@@ -3,7 +3,7 @@ import {
     Search, Filter, ChevronRight, Star,
     GraduationCap
 } from 'lucide-react';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 
 interface Certificate {
     id: string;

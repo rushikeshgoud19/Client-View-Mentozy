@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 
-import { BookingModal } from '../components/booking/BookingModal';
+import { BookingModal } from '../booking/BookingModal';
 
 export function MentorsPage() {
   const [mentors, setMentors] = useState<Mentor[]>([]);

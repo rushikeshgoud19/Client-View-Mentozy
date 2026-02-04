@@ -1,4 +1,4 @@
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 import { Award, Star, ThumbsUp, Medal, Crown, Quote } from 'lucide-react';
 
 export function MentorAchievementsPage() {

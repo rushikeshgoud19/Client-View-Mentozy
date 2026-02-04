@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../dashboard/DashboardLayout';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { DollarSign, Clock, Users, TrendingUp } from 'lucide-react';
 
