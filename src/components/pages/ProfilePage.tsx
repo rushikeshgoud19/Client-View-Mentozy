@@ -38,14 +38,30 @@ export function ProfilePage() {
     });
 
     const [newInterest, setNewInterest] = useState('');
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState('');
+
+    // Pre-defined Animal Avatars (using DiceBear for extensive, cute options)
+    const ANIMAL_AVATARS = [
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Bear&backgroundColor=e5f3ff",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Cat&backgroundColor=ffe5ec",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Dog&backgroundColor=e6fffa",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Fox&backgroundColor=fffbeb",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Rabbit&backgroundColor=f3e8ff",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Lion&backgroundColor=ffedd5",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Panda&backgroundColor=f1f5f9",
+        "https://api.dicebear.com/7.x/notionists/svg?seed=Koala&backgroundColor=e0e7ff"
+    ];
 
     useEffect(() => {
         async function loadProfile() {
             if (!user) return;
+
             try {
                 const data = await getUserProfile(user.id);
                 if (data) {
                     setProfile(data);
+                    setAvatarUrl(data.avatar_url || '');
                     setFormData({
                         full_name: String(data.full_name || user.user_metadata?.full_name || ''),
                         school: String(data.school || ''),
@@ -69,6 +85,7 @@ export function ProfilePage() {
                         ...prev,
                         full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
                     }));
+                    setAvatarUrl(user.user_metadata?.avatar_url || user.user_metadata?.picture || '');
                 }
             } catch (error: any) {
                 console.error("Detailed error loading profile:", {
@@ -83,6 +100,23 @@ export function ProfilePage() {
         }
         loadProfile();
     }, [user]);
+
+    const handleAvatarSelect = (url: string) => {
+        setAvatarUrl(url);
+        setShowAvatarPicker(false);
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarUrl(reader.result as string);
+                setShowAvatarPicker(false);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -106,13 +140,41 @@ export function ProfilePage() {
         }));
     };
 
+    const handleCancel = () => {
+        if (profile) {
+            setFormData({
+                full_name: String(profile.full_name || user?.user_metadata?.full_name || ''),
+                school: String(profile.school || ''),
+                grade: String(profile.grade || ''),
+                phone: String(profile.phone || ''),
+                location: String(profile.location || ''),
+                about_me: String(profile.about_me || ''),
+                curiosities: String(profile.curiosities || ''),
+                learning_now: String(profile.learning_now || ''),
+                future_goals: String(profile.future_goals || ''),
+                learning_goals: String(profile.learning_goals || ''),
+                learning_style: String(profile.learning_style || ''),
+                availability: String(profile.availability || ''),
+                age: String(profile.age || ''),
+                dob: String(profile.dob || ''),
+                interests: Array.isArray(profile.interests) ? profile.interests : []
+            });
+            setAvatarUrl(profile.avatar_url || '');
+            toast.info("Changes discarded");
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
 
         setSaving(true);
         try {
-            const updatedProfile = await updateUserProfile(user.id, formData);
+            const updates = {
+                ...formData,
+                avatar_url: avatarUrl
+            };
+            const updatedProfile = await updateUserProfile(user.id, updates);
             if (updatedProfile) {
                 setProfile(updatedProfile);
                 toast.success("Profile updated successfully!");
@@ -160,9 +222,9 @@ export function ProfilePage() {
                         {/* Profile Photo */}
                         <div className="relative group/avatar">
                             <div className="w-44 h-44 rounded-[2.5rem] bg-indigo-50 overflow-hidden border-8 border-white shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105">
-                                {profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                                {avatarUrl ? (
                                     <img
-                                        src={profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture}
+                                        src={avatarUrl}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
                                     />
@@ -172,9 +234,75 @@ export function ProfilePage() {
                                     </div>
                                 )}
                             </div>
-                            <button className="absolute bottom-2 right-2 p-3 bg-indigo-600 text-white rounded-2xl shadow-xl hover:bg-indigo-700 transition-all hover:scale-110">
+                            <button
+                                onClick={() => {
+                                    if (user?.email_confirmed_at) {
+                                        setShowAvatarPicker(true);
+                                    } else {
+                                        toast.error("Please verify your email to change your avatar.");
+                                    }
+                                }}
+                                className={`absolute bottom-2 right-2 p-3 rounded-2xl shadow-xl transition-all ${user?.email_confirmed_at
+                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-110 cursor-pointer'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                title={user?.email_confirmed_at ? "Change Avatar" : "Verify email to change avatar"}
+                            >
                                 <Camera className="w-5 h-5" />
                             </button>
+
+                            {/* Avatar Picker Modal - Full Screen Overlay */}
+                            {showAvatarPicker && user?.email_confirmed_at && (
+                                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                                    <div className="bg-white rounded-3xl p-8 shadow-2xl border border-indigo-100 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+                                        {/* Close button */}
+                                        <button
+                                            onClick={() => setShowAvatarPicker(false)}
+                                            className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                                        >
+                                            <X className="w-5 h-5 text-gray-500" />
+                                        </button>
+
+                                        <h4 className="text-xl font-bold text-gray-900 mb-6">Choose Your Avatar</h4>
+
+                                        {/* Upload Custom */}
+                                        <div className="mb-6">
+                                            <label className="block text-xs font-black uppercase tracking-wider text-gray-400 mb-3">Upload Custom Image</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    className="block w-full text-sm text-slate-700 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 file:cursor-pointer transition-all border-2 border-dashed border-gray-200 rounded-2xl p-4 hover:border-indigo-300"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Divider */}
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="flex-1 h-px bg-gray-200"></div>
+                                            <span className="text-xs font-bold text-gray-400 uppercase">Or Choose</span>
+                                            <div className="flex-1 h-px bg-gray-200"></div>
+                                        </div>
+
+                                        {/* Animal Avatars */}
+                                        <div>
+                                            <label className="block text-xs font-black uppercase tracking-wider text-gray-400 mb-3">Pick an Animal Avatar</label>
+                                            <div className="grid grid-cols-4 gap-3">
+                                                {ANIMAL_AVATARS.map((url, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleAvatarSelect(url)}
+                                                        className="aspect-square rounded-2xl bg-gray-50 hover:bg-indigo-50 hover:scale-105 transition-all border-2 border-transparent hover:border-indigo-300 overflow-hidden group"
+                                                    >
+                                                        <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Name & Basic Info */}
@@ -238,12 +366,34 @@ export function ProfilePage() {
                             </div>
 
                             <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
-                                <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                                    <CheckCircle2 className="w-3 h-3" /> Email Verified
-                                </span>
-                                <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100">
-                                    <AlertCircle className="w-3 h-3" /> Parent Unverified
-                                </span>
+                                {user?.email_confirmed_at ? (
+                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                                        <CheckCircle2 className="w-3 h-3" /> Email Verified
+                                    </span>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100">
+                                            <AlertCircle className="w-3 h-3" /> Email Unverified
+                                        </span>
+                                        <button
+                                            onClick={async () => {
+                                                const { getSupabase } = await import('@/lib/supabase');
+                                                const supabase = getSupabase();
+                                                if (supabase && user?.email) {
+                                                    const { error } = await supabase.auth.resend({
+                                                        type: 'signup',
+                                                        email: user.email,
+                                                    });
+                                                    if (error) toast.error("Failed to send verification email: " + error.message);
+                                                    else toast.success("Verification email sent! Check your inbox.");
+                                                }
+                                            }}
+                                            className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                                        >
+                                            Resend Link
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -417,68 +567,6 @@ export function ProfilePage() {
 
                     {/* Right Column: 4. Activity & Progress Summary */}
                     <div className="space-y-10">
-                        {/* Progress Summary Card */}
-                        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
-                            <Layout className="absolute -bottom-6 -right-6 w-32 h-32 text-gray-50 -rotate-12" />
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900">
-                                <Zap className="w-5 h-5 text-amber-500 fill-amber-500" />
-                                Growth Engine
-                            </h3>
-                            <div className="space-y-6 relative z-10">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-gray-500">
-                                        <span>Course Completion</span>
-                                        <span className="text-indigo-600">85%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-indigo-500 w-[85%] shadow-sm"></div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-gray-500">
-                                        <span>Skill Points</span>
-                                        <span className="text-emerald-600">12,490 XP</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-emerald-500 w-[60%] shadow-sm"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-8 pt-8 border-t border-gray-100 grid grid-cols-2 gap-4 relative z-10">
-                                <div>
-                                    <div className="text-2xl font-black text-gray-900">14</div>
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Streak</div>
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-black text-gray-900">28</div>
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Modules</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Recent Badges Placeholder */}
-                        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm">
-                            <h3 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                <Award className="w-5 h-5 text-indigo-500" />
-                                Recent Badges
-                            </h3>
-                            <div className="flex gap-4">
-                                <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 border border-amber-100 shadow-sm hover:scale-110 transition-transform">
-                                    <Sparkles className="w-6 h-6" />
-                                </div>
-                                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-100 shadow-sm hover:scale-110 transition-transform">
-                                    <Target className="w-6 h-6" />
-                                </div>
-                                <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-100 shadow-sm hover:scale-110 transition-transform">
-                                    <Zap className="w-6 h-6" />
-                                </div>
-                            </div>
-                            <button className="w-full mt-8 py-3 bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-500 rounded-xl hover:bg-gray-100 transition-all">
-                                View Portfolio
-                            </button>
-                        </div>
-
-                        {/* Action Buttons */}
                         <div className="space-y-4">
                             <button
                                 onClick={handleSubmit}
@@ -488,11 +576,15 @@ export function ProfilePage() {
                                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                 Save Everything
                             </button>
-                            <button className="w-full py-4 bg-white border border-gray-100 text-gray-400 font-bold rounded-[2rem] hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition-all flex items-center justify-center gap-3">
+                            <button
+                                onClick={handleCancel}
+                                className="w-full py-4 bg-white border border-gray-100 text-gray-400 font-bold rounded-[2rem] hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition-all flex items-center justify-center gap-3"
+                            >
                                 <X className="w-5 h-5" />
                                 Cancel Changes
                             </button>
                         </div>
+
                     </div>
 
                 </div>

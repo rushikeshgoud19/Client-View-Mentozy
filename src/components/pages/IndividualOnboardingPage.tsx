@@ -76,61 +76,159 @@ export function IndividualOnboardingPage() {
             const supabase = getSupabase();
             if (!supabase) throw new Error("Supabase not initialized");
 
+            console.log('Starting signup process...');
+
+            // DEV MODE: Bypass auth for testing when rate-limited
+            const DEV_MODE = false; // Set to false in production
+            let userId: string;
+            let isDevMode = false;
+
             // 1. Sign Up User (or handle existing)
-            // Note: For this demo flow we assume new user. Ideally handle "User already exists" logic
             let { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
-                // Remove options to prevent trigger errors
             });
 
             if (authError) {
-                if (authError.message.includes("already registered")) {
-                    // Auto-login fallback logic could go here if we had password field
+                console.error('Auth Error:', authError);
+
+                // DEV MODE: Bypass rate limit by creating profile directly
+                if (authError.message.includes("rate limit") && DEV_MODE) {
+                    console.warn('⚠️ RATE LIMIT HIT - Using DEV MODE to bypass auth');
+                    // Generate a deterministic UUID based on email for testing
+                    const emailHash = formData.email.split('').reduce((a, b) => {
+                        a = ((a << 5) - a) + b.charCodeAt(0);
+                        return a & a;
+                    }, 0);
+                    userId = `00000000-0000-4000-8000-${Math.abs(emailHash).toString().padStart(12, '0')}`;
+                    isDevMode = true;
+                    console.log('🔧 DEV MODE: Using generated user ID:', userId);
+                } else if (authError.message.includes("invalid")) {
+                    throw new Error("Invalid email address. Please use a valid email format (e.g., mentor@example.com)");
+                } else if (authError.message.includes("rate limit")) {
+                    throw new Error("Too many signup attempts. Please wait a few minutes and try again, or use a different email address.");
+                } else if (authError.message.includes("already registered")) {
                     throw new Error("User already registered. Please login.");
+                } else {
+                    throw new Error(authError.message || 'Authentication failed');
                 }
-                throw authError;
+            } else {
+                if (!authData.user) {
+                    throw new Error("No user created");
+                }
+                userId = authData.user.id;
+                console.log('User created:', userId);
             }
 
-            if (!authData.user) throw new Error("No user created");
-
             // 2. Upsert Profile
-            await supabase.from('profiles').upsert({
-                id: authData.user.id,
+            const { error: profileError } = await supabase.from('profiles').upsert({
+                id: userId,
+                email: formData.email,
                 full_name: formData.fullName,
                 role: 'mentor',
                 phone: formData.phone
             });
 
+            if (profileError) {
+                console.error('Profile Error:', profileError);
+                throw new Error(`Profile creation failed: ${profileError.message}`);
+            }
+
+            console.log('Profile created');
+
             // 3. Upsert Mentor Record
             const { data: mentorData, error: mentorError } = await supabase
                 .from('mentors')
                 .upsert({
-                    user_id: authData.user.id,
-                    bio: formData.designation, // Storing designation in bio for now
-                    years_experience: 0, // Default or parse from experience text
+                    user_id: userId,
+                    bio: `${formData.designation} specializing in ${formData.subjects.join(', ')}. ${formData.experience || ''}`.trim(),
+                    company: 'Independent Tutor',
+                    years_experience: 0,
                     hourly_rate: formData.hourlyRate,
-                    rating: 5.0,
+                    rating: 1.0,
                     total_reviews: 0
                 }, { onConflict: 'user_id' })
                 .select()
                 .single();
 
-            if (mentorError) throw mentorError;
+            if (mentorError) {
+                console.error('Mentor Error:', mentorError);
+                console.error('Mentor Error Details:', {
+                    message: mentorError.message,
+                    code: mentorError.code,
+                    details: mentorError.details,
+                    hint: mentorError.hint
+                });
+                throw new Error(`Mentor profile creation failed: ${mentorError.message || 'Unknown error'}`);
+            }
+
+            if (!mentorData) {
+                throw new Error('No mentor data returned');
+            }
+
+            console.log('Mentor created:', mentorData.id);
 
             // 4. Insert Subjects (Expertise)
-            const expertiseInserts = formData.subjects.map(s => ({
-                mentor_id: mentorData.id,
-                skill: s
-            }));
+            if (formData.subjects.length > 0) {
+                const expertiseInserts = formData.subjects.map(s => ({
+                    mentor_id: mentorData.id,
+                    skill: s
+                }));
 
-            await supabase.from('mentor_expertise').upsert(expertiseInserts, { onConflict: 'mentor_id,skill' });
+                const { error: expertiseError } = await supabase
+                    .from('mentor_expertise')
+                    .upsert(expertiseInserts, { onConflict: 'mentor_id,skill' });
+
+                if (expertiseError) {
+                    console.error('Expertise Error:', expertiseError);
+                    throw new Error(`Expertise creation failed: ${expertiseError.message}`);
+                }
+
+                console.log('Expertise added');
+            }
+
+            console.log('Signup complete! Redirecting...');
+
+            // Auto-login the user
+            console.log('Attempting auto-login...');
+            try {
+                const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                    email: formData.email,
+                    password: formData.password,
+                });
+
+                if (loginError) {
+                    console.warn('Auto-login failed:', loginError.message);
+                    // Don't throw - profile was created successfully
+                    if (isDevMode) {
+                        toast.success('🔧 DEV MODE: Profile created (auth bypassed)');
+                    } else {
+                        toast.success('Account created! Please log in.');
+                    }
+                } else {
+                    console.log('✅ Auto-login successful!');
+                    toast.success('Welcome! Account created and logged in.');
+                }
+            } catch (loginErr) {
+                console.warn('Auto-login error:', loginErr);
+                // Still proceed to success page
+            }
 
             router.push('/teacher-success?status=active');
 
         } catch (error: any) {
             console.error('Signup Error:', error);
-            toast.error(error.message || "Failed to create account");
+            console.error('Error details:', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+                code: error?.code,
+                details: error?.details,
+                hint: error?.hint
+            });
+
+            const errorMessage = error?.message || error?.toString() || "Failed to create account. Please try again.";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

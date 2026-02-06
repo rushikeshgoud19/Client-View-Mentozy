@@ -52,9 +52,10 @@ export interface Mentor {
     bio?: string;
     years_experience?: number;
     hourly_rate?: number;
+    linkedin?: string;
+    website?: string;
     // Organization / Extended Fields
     type?: 'online' | 'offline';
-    website?: string;
     address?: string;
     founder?: string;
     status?: string;
@@ -96,6 +97,72 @@ export interface Profile {
     dob?: string;
 }
 
+
+// Get user profile with role - Robust version handling 406 errors
+export async function getUserProfile(userId: string): Promise<Profile | null> {
+    try {
+        const supabase = getSupabase();
+        if (!supabase) return null;
+
+        // Fetch profile - use limit(1) manually to avoid 406/JSON errors with .maybeSingle()
+        const { data: profileList, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .limit(1);
+
+        const data = profileList?.[0] || null;
+
+        if (error) {
+            // Suppress common benign errors (406, PGRST116 = no rows)
+            if (error.code !== 'PGRST406' && error.code !== 'PGRST116') {
+                console.error('Error fetching user profile:', error);
+            }
+        }
+
+        if (!data) {
+            console.warn('Profile not found for ID:', userId);
+
+            // Fallback: Check if they are a mentor directly
+            // Use limit(1) here too to be safe from 406
+            const { data: mentorList } = await supabase
+                .from('mentors')
+                .select('id')
+                .eq('user_id', userId)
+                .limit(1);
+
+            const mentorData = mentorList?.[0];
+
+            if (mentorData) {
+                console.log('Found mentor record despite missing profile, assuming mentor role');
+                return { id: userId, role: 'mentor' } as Profile;
+            }
+
+            return null;
+        }
+
+        // Check consistency - if they have a mentor record, force role to mentor
+        if (data.role !== 'mentor') {
+            const { data: mentorList } = await supabase
+                .from('mentors')
+                .select('id')
+                .eq('user_id', userId)
+                .limit(1);
+
+            const mentorData = mentorList?.[0];
+
+            if (mentorData) {
+                return { ...data, role: 'mentor' };
+            }
+        }
+
+        return data as Profile;
+    } catch (error) {
+        console.error('getUserProfile error:', error);
+        return null;
+    }
+}
+
 export interface Enrollment {
     id: string;
     user_id: string;
@@ -116,98 +183,6 @@ export interface Booking {
     mentors?: Mentor; // Joined data (Student View)
     profiles?: Profile; // Joined data (Mentor View: Student info)
 }
-
-// Fallback Data - CALIBRATED: Prices $15-$75, Natural Ratings
-const FALLBACK_MENTORS: Mentor[] = [
-    {
-        id: 101,
-        name: "Dr. Aris Thorne",
-        role: "Head of AI Research",
-        company: "DeepMind",
-        expertise: ["Neural Networks", "Ethics in AI"],
-        rating: 5.0,
-        reviews: 342,
-        image: "bg-indigo-600/10 text-indigo-600",
-        initials: "AT",
-        bio: "Specializing in the intersection of cognitive science and machine learning. 15+ years of experience.",
-        years_experience: 15,
-        hourly_rate: 75
-    },
-    {
-        id: 102,
-        name: "Elena Rodriguez",
-        role: "Senior UX Architect",
-        company: "Adobe",
-        expertise: ["Design Systems", "User Psychology"],
-        rating: 4.5,
-        reviews: 215,
-        image: "bg-rose-500/10 text-rose-600",
-        initials: "ER",
-        bio: "Passionate about creating inclusive digital experiences. I help designers master design systems.",
-        years_experience: 9,
-        hourly_rate: 65
-    },
-    {
-        id: 103,
-        name: "Marcus Holloway",
-        role: "Security Consultant",
-        company: "CrowdStrike",
-        expertise: ["Cybersecurity", "Cloud Security"],
-        rating: 4.3,
-        reviews: 128,
-        image: "bg-slate-800/10 text-slate-800",
-        initials: "MH",
-        bio: "Helping startups and enterprises secure their infrastructure. Certified ethical hacker.",
-        years_experience: 12,
-        hourly_rate: 55
-    },
-    {
-        id: 104,
-        name: "Sienna Kim",
-        role: "Marketing Director",
-        company: "Spotify",
-        expertise: ["Growth Hacking", "Brand Strategy"],
-        rating: 4.1,
-        reviews: 560,
-        image: "bg-emerald-500/10 text-emerald-600",
-        initials: "SK",
-        bio: "Expert at scaling user bases through data-driven marketing strategies.",
-        years_experience: 10,
-        hourly_rate: 45
-    },
-    {
-        id: 105,
-        name: "Rohal Sharma",
-        role: "Senior Instructor",
-        company: "TechNexus",
-        expertise: ["Full Stack Web", "React"],
-        rating: 4.5,
-        reviews: 142,
-        image: "bg-amber-500/10 text-amber-600",
-        initials: "RS",
-        bio: "Dedicated instructor with a passion for teaching modern web technologies.",
-        years_experience: 7,
-        hourly_rate: 35
-    },
-    {
-        id: 106,
-        name: "TechNova Academy",
-        role: "Educational Partner",
-        company: "Global Ed",
-        expertise: ["Bootcamps", "Certifications"],
-        rating: 4.3,
-        reviews: 1200,
-        image: "bg-blue-600/10 text-blue-600",
-        initials: "TN",
-        type: "online",
-        website: "technova.academy",
-        address: "Digital Campus",
-        founder: "Dr. Sarah Chen",
-        status: "active",
-        bio: "Provider of high-impact technical training programs.",
-        hourly_rate: 25
-    }
-];
 
 const FALLBACK_TRACKS: Track[] = [
     {
@@ -239,7 +214,7 @@ const FALLBACK_TRACKS: Track[] = [
 export const getMentors = async (): Promise<Mentor[]> => {
     try {
         const supabase = getSupabase();
-        if (!supabase) return FALLBACK_MENTORS;
+        if (!supabase) return [];
 
         const { data, error } = await supabase
             .from('mentors')
@@ -250,12 +225,12 @@ export const getMentors = async (): Promise<Mentor[]> => {
             `);
 
         if (error) {
-            console.warn("Error fetching mentors from Supabase, using fallback:", error.message);
-            return FALLBACK_MENTORS;
+            console.warn("Error fetching mentors from Supabase:", error.message);
+            return [];
         }
 
         if (!data || data.length === 0) {
-            return FALLBACK_MENTORS;
+            return [];
         }
 
         const dbMentors = data as unknown as DBMentor[];
@@ -266,7 +241,7 @@ export const getMentors = async (): Promise<Mentor[]> => {
                 const bio = (item.bio || '').toLowerCase();
                 const company = (item.company || '').toLowerCase();
 
-                // CALIBRATED FILTERING: Remove dwdsdaw and mentozy as requested
+                // Filter out test data and banned names
                 const isTestOrBanned =
                     name.includes('dasd') || name.includes('ghgh') || name.includes('wdas') ||
                     name.includes('test') || name.includes('dwds') || name.includes('mentozy') ||
@@ -313,8 +288,9 @@ export const getMentors = async (): Promise<Mentor[]> => {
                     bio: bioData ? undefined : item.bio || undefined,
                     years_experience: item.years_experience || 5,
                     hourly_rate: rate,
-                    type: bioData?.type,
+                    linkedin: bioData?.linkedin,
                     website: bioData?.website,
+                    type: bioData?.type,
                     address: bioData?.address,
                     founder: bioData?.founder,
                     status: bioData?.status,
@@ -322,11 +298,10 @@ export const getMentors = async (): Promise<Mentor[]> => {
                 };
             });
 
-        // Mix with premium fallbacks
-        return [...mappedMentors, ...FALLBACK_MENTORS].slice(0, 12);
+        return mappedMentors;
     } catch (e) {
         console.error("Unexpected error fetching mentors:", e);
-        return FALLBACK_MENTORS;
+        return [];
     }
 };
 
@@ -372,45 +347,24 @@ export const getTracks = async (): Promise<Track[]> => {
     }
 };
 
-export const getUserProfile = async (userId: string): Promise<Profile | null> => {
-    try {
-        const supabase = getSupabase();
-        if (!supabase) return null;
 
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (error) {
-            console.error("Error fetching profile:", error);
-            return null;
-        }
-
-        return data as Profile;
-    } catch (e) {
-        console.error("Unexpected error in getUserProfile:", e);
-        return null;
-    }
-};
 
 export const updateUserProfile = async (userId: string, updates: Partial<Profile>): Promise<Profile | null> => {
     try {
         const supabase = getSupabase();
         if (!supabase) return null;
 
+        // Use upsert to create profile if it doesn't exist
         const { data, error } = await supabase
             .from('profiles')
-            .update(updates)
-            .eq('id', userId)
+            .upsert({ id: userId, ...updates })
             .select()
             .single();
 
         if (error) throw error;
         return data as Profile;
-    } catch (e) {
-        console.error("Error updating profile:", e);
+    } catch (e: any) {
+        console.error("Error updating profile:", e.message || e);
         return null;
     }
 };
@@ -545,11 +499,69 @@ export const getStudentBookings = async (userId: string): Promise<Booking[]> => 
     }
 };
 
+
+
+
+// ==============================
+// NOTIFICATIONS
+// ==============================
+
+export interface Notification {
+    id: string;
+    user_id: string;
+    type: 'booking' | 'system' | 'message';
+    message: string;
+    link?: string;
+    read: boolean;
+    created_at: string;
+}
+
+export const getNotifications = async (userId: string): Promise<Notification[]> => {
+    try {
+        const supabase = getSupabase();
+        if (!supabase) return [];
+
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) {
+            console.error("Error fetching notifications:", error);
+            return [];
+        }
+        return data as Notification[];
+    } catch (e) {
+        console.error("Unexpected error fetching notifications:", e);
+        return [];
+    }
+};
+
+export const markNotificationRead = async (notificationId: string): Promise<boolean> => {
+    try {
+        const supabase = getSupabase();
+        if (!supabase) return false;
+
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notificationId);
+
+        if (error) return false;
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 export const createBooking = async (userId: string, mentorId: number, scheduledAt: string): Promise<boolean> => {
     try {
         const supabase = getSupabase();
         if (!supabase) return false;
 
+        // 1. Create Booking via RPC
         const { data, error } = await supabase.rpc('create_booking_adhoc', {
             p_student_id: userId,
             p_mentor_id: mentorId,
@@ -560,6 +572,41 @@ export const createBooking = async (userId: string, mentorId: number, scheduledA
             console.error("RPC Error creating booking:", error);
             return false;
         }
+
+        // 2. Create Notification for Mentor
+        try {
+            // Get mentor's user_id
+            const { data: mentorData } = await supabase
+                .from('mentors')
+                .select('user_id')
+                .eq('id', mentorId)
+                .single();
+
+            if (mentorData && mentorData.user_id) {
+                // Get student name for message
+                const { data: studentProfile } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', userId)
+                    .single();
+
+                const studentName = studentProfile?.full_name || 'A student';
+                const dateStr = new Date(scheduledAt).toLocaleDateString();
+                const timeStr = new Date(scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                await supabase.from('notifications').insert({
+                    user_id: mentorData.user_id,
+                    type: 'booking',
+                    message: `New session request from ${studentName} for ${dateStr} at ${timeStr}`,
+                    link: '/mentor-dashboard?tab=bookings',
+                    read: false
+                });
+            }
+        } catch (notifError) {
+            console.error("Error sending notification (booking still succeeded):", notifError);
+            // Don't fail the booking if notification fails
+        }
+
         return !!data;
     } catch (e) {
         console.error("Error creating booking:", e);
@@ -567,19 +614,26 @@ export const createBooking = async (userId: string, mentorId: number, scheduledA
     }
 };
 
+
 export const getMentorBookings = async (userId: string): Promise<Booking[]> => {
     try {
         const supabase = getSupabase();
         if (!supabase) return [];
 
-        const { data: mentorData, error: mentorError } = await supabase
+        const { data: mentorList, error: mentorError } = await supabase
             .from('mentors')
             .select('id')
             .eq('user_id', userId)
-            .single();
+            .limit(1);
+
+        const mentorData = mentorList?.[0];
 
         if (mentorError || !mentorData) {
-            console.error("Error fetching mentor record:", mentorError);
+            // Only log actual errors, not "no data found" cases
+            if (mentorError && mentorError.code !== 'PGRST116') {
+                console.error("Error fetching mentor record (getMentorBookings):", mentorError);
+            }
+            // No mentor record = no bookings to show, which is fine
             return [];
         }
 

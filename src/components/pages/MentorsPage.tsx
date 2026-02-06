@@ -1,5 +1,5 @@
 "use client";
-import { Search, Filter, Star, Linkedin, Loader2, Calendar, Globe, MapPin, User, Building2, ExternalLink, ShieldCheck, Sparkles } from 'lucide-react';
+import { Search, Filter, Star, Linkedin, Loader2, Calendar, Globe, MapPin, User, Building2, ExternalLink, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { getMentors, Mentor, createBooking } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -120,6 +120,32 @@ export function MentorsPage() {
             </div>
             <p className="text-gray-400 font-bold text-lg animate-pulse tracking-tight">Curating the best for you...</p>
           </div>
+        ) : filteredMentors.length === 0 ? (
+          /* Empty State */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-40 space-y-6"
+          >
+            <div className="relative">
+              <div className="w-32 h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+                <UsersRound className="w-16 h-16 text-amber-500" />
+              </div>
+              <div className="absolute inset-0 bg-amber-500/10 blur-2xl rounded-full" />
+            </div>
+            <div className="text-center max-w-md">
+              <h3 className="text-2xl font-black text-gray-900 mb-3">No Mentors Available Yet</h3>
+              <p className="text-gray-500 font-medium leading-relaxed">
+                Our mentor network is growing! Check back soon or be the first to join as a mentor and inspire the next generation.
+              </p>
+            </div>
+            <a
+              href="/mentor-onboarding"
+              className="mt-6 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black rounded-2xl hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg shadow-amber-500/30 hover:scale-105"
+            >
+              Become a Mentor
+            </a>
+          </motion.div>
         ) : (
           /* Mentors Grid */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -139,6 +165,12 @@ export function MentorsPage() {
 
                     {/* Glowing Accent */}
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    {/* Mentor Badge */}
+                    <div className="absolute top-6 right-6 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-1.5 rounded-full text-xs font-black shadow-lg flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      MENTOR
+                    </div>
 
                     <div className="flex flex-col items-center text-center mb-8 pt-4">
                       <div className="relative mb-6">
@@ -211,9 +243,28 @@ export function MentorsPage() {
                         <span className="relative z-10">Instant Booking</span>
                         <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-orange-500 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                       </button>
-                      <button className="p-5 bg-white border border-gray-100 rounded-[2rem] text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100 transition-all shadow-sm">
-                        <Linkedin className="w-5 h-5 fill-current" />
-                      </button>
+                      {mentor.linkedin && (
+                        <a
+                          href={mentor.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-5 bg-white border border-gray-100 rounded-[2rem] text-gray-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100 transition-all shadow-sm"
+                          title="View LinkedIn Profile"
+                        >
+                          <Linkedin className="w-5 h-5 fill-current" />
+                        </a>
+                      )}
+                      {mentor.website && (
+                        <a
+                          href={mentor.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-5 bg-white border border-gray-100 rounded-[2rem] text-gray-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-100 transition-all shadow-sm"
+                          title="Visit Website"
+                        >
+                          <Globe className="w-5 h-5" />
+                        </a>
+                      )}
                     </div>
                   </div>
                 </motion.div>

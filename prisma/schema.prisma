@@ -8,8 +8,32 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+model Profile {
+  id              String   @id @db.Uuid
+  email           String?
+  full_name       String?
+  avatar_url      String?
+  role            String   @default("student") // 'student' | 'mentor' | 'admin'
+  grade           String?
+  school          String?
+  phone           String?
+  interests       String[]
+  streak          Int      @default(0)
+  
+  // Extended Profile Fields
+  about_me        String?
+  curiosities     String?
+  learning_now    String?
+  future_goals    String?
+  learning_goals  String?
+  learning_style  String?
+  availability    String?
+  location        String?
+  age             String?
+  dob             String?
+  
+  updated_at      DateTime? @updatedAt
+  created_at      DateTime? @default(now())
+
+  @@map("profiles")
 }
